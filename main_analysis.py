@@ -13,25 +13,27 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
-import ot
 from pathlib import Path
 
 from optimization import optimize_alpha_beta_complete, mccann_interpolation
 from optimal_transport import compute_entropic_ot_coupling, compute_ot_distance
 
 # Paramètres globaux
-n_samples = 200
-num_iter = 1
-blur = 3.0
+n_samples = 1
+num_iter = 100
+blur = 1.0
+mode = 'global'
 
 
 # Configuration des intervalles temporels à analyser
 TIME_INTERVALS = [
     {'folder': '0_6_12', 't1': 0, 't2': 6, 't3': 12},
+    {'folder': '6_12_24', 't1': 6, 't2': 12, 't3': 24},
     {'folder': '12_24_36', 't1': 12, 't2': 24, 't3': 36},
     {'folder': '24_36_48', 't1': 24, 't2': 36, 't3': 48},
     {'folder': '36_48_60', 't1': 36, 't2': 48, 't3': 60},
-    {'folder': '48_60_72', 't1': 48, 't2': 60, 't3': 72}
+    {'folder': '48_60_72', 't1': 48, 't2': 60, 't3': 72},
+    {'folder': '60_72_96', 't1': 60, 't2': 72, 't3': 96}
 ]
 
 
@@ -51,9 +53,9 @@ def load_data(folder='data', time_init=0, time_int=0, time_final=0):
     # Chargement des fichiers
     df = pd.read_csv('panel_real.txt', sep='\t')
     genes_names = pd.read_csv('panel_genes.txt', sep='\t')
-    B_ref = pd.read_csv(f'{folder}/PDMP_ref.txt', sep=' ', header=None)
-    B_sch = pd.read_csv(f'{folder}/PDMP_sch.txt', sep=' ', header=None)
-    rho_est = pd.read_csv(f'{folder}/rho_est_tilde.txt', sep=' ', header=None)
+    B_ref = pd.read_csv(f'{folder}/PDMP_ref_{time_init}_{time_final}.txt', sep=' ', header=None)
+    B_sch = pd.read_csv(f'{folder}/PDMP_sch_{time_init}_{time_final}.txt', sep=' ', header=None)
+    rho_est = pd.read_csv(f'{folder}/rho_est_t{time_int}.txt', sep=' ', header=None)
     
     # Conversion en arrays numpy
     B_ref = np.array(B_ref)
@@ -83,7 +85,7 @@ def load_data(folder='data', time_init=0, time_int=0, time_final=0):
         'data_t3': data_t3,
         'B_ref': B_ref,
         'B_sch': B_sch,
-        'rho_est': rho_est,
+        'rho_est': data_t2,
         'genes_names': genes_names
     }
 
@@ -124,7 +126,7 @@ def analyze_single_interval(interval_config, n_samples=300, num_iter=1, verbose=
     data_t3 = data['data_t3'].T 
     B_ref = data['B_ref']
     B_sch = data['B_sch']
-    rho_est = data['rho_est'].T 
+    rho_est = data['rho_est'].T
     genes_names = data['genes_names']
     
     n_genes = data_t1.shape[1]
@@ -137,19 +139,19 @@ def analyze_single_interval(interval_config, n_samples=300, num_iter=1, verbose=
     if verbose:
         print(f"\nOptimisation per-gene...")
     
-    alpha_opt_per_gene, beta_opt_per_gene, losses_per_gene = optimize_alpha_beta_complete(
+    alpha_opt_per_gene, beta_opt_per_gene = optimize_alpha_beta_complete(
         data_t1=data_t1,
         data_t3=data_t3,
         B_ref=B_ref,
-        rho_ref=rho_est[np.random.choice(rho_est.shape[0], size=n_samples, replace=False)],
+        rho_ref=rho_est[np.random.choice(rho_est.shape[0], size=n_samples * B_ref.shape[0]), :],
         n_samples=n_samples,
         n_iterations=num_iter,
         lr=0.05,
         blur=blur,
         verbose=verbose,
-        mode='per_gene',
+        mode=mode,
         constrain=True,
-        n_jobs=-1  # Parallélisations
+        n_jobs=-1  # Parallélisations si mode == 'per_gene'
     )
     
     # Interpolation Bursty
@@ -166,7 +168,7 @@ def analyze_single_interval(interval_config, n_samples=300, num_iter=1, verbose=
     OT_coupling = compute_entropic_ot_coupling(
         data_t1=data_t1,
         data_t3=data_t3,
-        epsilon=1.0, 
+        epsilon=blur**2, 
         numItermax=10000
     )
     
@@ -216,7 +218,6 @@ def analyze_single_interval(interval_config, n_samples=300, num_iter=1, verbose=
         'EMD_Bursty': EMD_Bursty,
         'EMD_OT': EMD_OT,
         'Delta_EMD': Delta_EMD,
-        'losses_per_gene': losses_per_gene,
         'n_genes': n_genes
     }
 

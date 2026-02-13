@@ -7,7 +7,7 @@ import numpy as np
 import ot
 
 
-def compute_entropic_ot_coupling(data_t1, data_t3, epsilon=0.01, numItermax=10000):
+def compute_entropic_ot_coupling(data_t1=np.zeros(10), data_t3=np.zeros(10), M = np.zeros((10, 10)), epsilon=0.01, numItermax=10000):
     """
     Calcule le couplage de transport optimal entropique entre deux distributions.
     
@@ -27,20 +27,22 @@ def compute_entropic_ot_coupling(data_t1, data_t3, epsilon=0.01, numItermax=1000
     coupling : array, shape (n_cells_t1, n_cells_t3)
         Matrice de couplage optimal (plan de transport)
     """
-    
-    n_cells_t1 = data_t1.shape[0]
-    n_cells_t3 = data_t3.shape[0]
+    if np.sum(M) != 0:
+        n_cells_t1 = M.shape[0]
+        n_cells_t3 = M.shape[1]
+
+    else:
+        n_cells_t1 = data_t1.shape[0]
+        n_cells_t3 = data_t3.shape[0]
+        M = ot.dist(np.log(1 + data_t1), np.log(1 + data_t3), metric='euclidean')
+        M = M ** 2  # Distance quadratique pour Wasserstein-2
     
     # Distributions uniformes (mesures empiriques)
-    a = np.ones(n_cells_t1) / n_cells_t1
-    b = np.ones(n_cells_t3) / n_cells_t3
-    
-    # Matrice de coûts (distance euclidienne au carré)
-    M = ot.dist(np.log(1 + data_t1), np.log(1 + data_t3), metric='euclidean')
-    M = M ** 2  # Distance quadratique pour Wasserstein-2
+    a = np.ones(n_cells_t1)
+    b = np.ones(n_cells_t3) * n_cells_t1 / n_cells_t3
     
     # Transport optimal entropique (algorithme de Sinkhorn)
-    coupling = ot.sinkhorn(a, b, M, reg=epsilon, numItermax=numItermax)
+    coupling = ot.emd(a, b, M, numItermax=numItermax)
     
     return coupling
 
