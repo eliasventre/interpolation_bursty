@@ -19,8 +19,8 @@ from optimization import optimize_alpha_beta_complete, mccann_interpolation
 from optimal_transport import compute_entropic_ot_coupling, compute_ot_distance
 
 # Paramètres globaux
-n_samples = 1
-num_iter = 100
+n_samples = 10
+num_iter = 1
 blur = 1.0
 mode = 'global'
 
@@ -85,7 +85,7 @@ def load_data(folder='data', time_init=0, time_int=0, time_final=0):
         'data_t3': data_t3,
         'B_ref': B_ref,
         'B_sch': B_sch,
-        'rho_est': data_t2,
+        'rho_est': rho_est,
         'genes_names': genes_names
     }
 

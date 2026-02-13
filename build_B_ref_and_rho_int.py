@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 import umap.umap_ as umap
 
 data=pd.read_csv('Semrau/Data/panel_real.txt',sep='\t')
-n_simu = 1000
+n_simu = 100
 
 ##################Trier par timegap#############################
 from collections import defaultdict

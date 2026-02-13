@@ -17,12 +17,12 @@ def get_indices_coupling(data_t1, data_t3, coupling, n_samples):
     j_indices = []
     for index_x in range(n_cells_t1):
         probs = coupling[index_x, :]
-        # if probs.sum() > 0:
-        #     probs /= probs.sum()
-        # else:
-        #     probs = np.ones(n_cells_t3) / n_cells_t3
-        # sampled_indices = np.random.choice(n_cells_t3, size=n_samples, p=probs)
-        sampled_indices = np.argsort(probs)[::-1][:n_samples]
+        if probs.sum() > 0:
+            probs /= probs.sum()
+        else:
+            probs = np.ones(n_cells_t3) / n_cells_t3
+        sampled_indices = np.random.choice(n_cells_t3, size=n_samples, p=probs)
+        # sampled_indices = np.argsort(probs)[::-1][:n_samples]
         for index_y in sampled_indices:
             i_indices.append(index_x)
             j_indices.append(index_y)
