@@ -7,7 +7,7 @@ import numpy as np
 import ot
 
 
-def compute_entropic_ot_coupling(data_t1=np.zeros(10), data_t3=np.zeros(10), M = np.zeros((10, 10)), epsilon=0.01, numItermax=10000):
+def compute_entropic_ot_coupling(data_t1=np.zeros(10), data_t3=np.zeros(10), M = np.zeros((10, 10)), epsilon=0, numItermax=10000):
     """
     Calcule le couplage de transport optimal entropique entre deux distributions.
     
@@ -42,7 +42,10 @@ def compute_entropic_ot_coupling(data_t1=np.zeros(10), data_t3=np.zeros(10), M =
     b = np.ones(n_cells_t3) * n_cells_t1 / n_cells_t3
     
     # Transport optimal entropique (algorithme de Sinkhorn)
-    coupling = ot.emd(a, b, M, numItermax=numItermax)
+    if epsilon > 0:
+        coupling = ot.sinkhorn(a, b, M, reg=epsilon, numItermax=numItermax)
+    else:
+        coupling = ot.emd(a, b, M, numItermax=numItermax)
     
     return coupling
 

@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 import umap.umap_ as umap
 
 data=pd.read_csv('Semrau/Data/panel_real.txt',sep='\t')
-n_simu = 100
+n_simu = 10000
 
 ##################Trier par timegap#############################
 from collections import defaultdict
@@ -270,7 +270,7 @@ def process_timepoint_trio(t1, t2, t3, timepoint_data, n_simu, model, data_bool,
     # Calcul du couplage OT
     a = np.ones(PDMP_ref.shape[0]) 
     b = np.ones(PDMP_ref.shape[1]) * PDMP_ref.shape[0] / PDMP_ref.shape[1]
-    PDMP_sch = sinkhorn(a, b, PDMP_ref)
+    PDMP_sch = compute_entropic_ot_coupling(M=-np.log(1e-92 + PDMP_ref), epsilon=1.0)
     np.savetxt(f'{output_dir}/PDMP_sch_{t1}_{t3}.txt', PDMP_sch)
     
     print(f"✓ Trio {t1}-{t2}-{t3} terminé. Résultats sauvegardés dans '{output_dir}/'")
