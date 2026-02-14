@@ -20,7 +20,7 @@ from optimal_transport import compute_entropic_ot_coupling, compute_ot_distance
 
 # Paramètres globaux
 n_samples = 12
-num_iter = 1
+num_iter = 5
 blur = 1.0
 mode = 'global'
 
@@ -55,12 +55,12 @@ def load_data(folder='data', time_init=0, time_int=0, time_final=0):
     genes_names = pd.read_csv('panel_genes.txt', sep='\t')
     B_ref = pd.read_csv(f'{folder}/PDMP_ref_{time_init}_{time_final}.txt', sep=' ', header=None)
     B_sch = pd.read_csv(f'{folder}/PDMP_sch_{time_init}_{time_final}.txt', sep=' ', header=None)
-    # rho_est = pd.read_csv(f'{folder}/rho_est_t{time_int}.txt', sep=' ', header=None)
+    rho_est = pd.read_csv(f'{folder}/rho_est_t{time_int}.txt', sep=' ', header=None)
     
     # Conversion en arrays numpy
     B_ref = np.array(B_ref)
     B_sch = np.array(B_sch)
-    # rho_est = np.array(rho_est)
+    rho_est = np.array(rho_est)
     
     # Trier par timegap
     groupes = defaultdict(list)
@@ -85,7 +85,7 @@ def load_data(folder='data', time_init=0, time_int=0, time_final=0):
         'data_t3': data_t3,
         'B_ref': B_ref,
         'B_sch': B_sch,
-        'rho_est': data_t2,
+        'rho_est': rho_est,
         'genes_names': genes_names
     }
 
@@ -139,20 +139,22 @@ def analyze_single_interval(interval_config, n_samples=300, num_iter=1, verbose=
     if verbose:
         print(f"\nOptimisation per-gene...")
     
-    alpha_opt_per_gene, beta_opt_per_gene = optimize_alpha_beta_complete(
-        data_t1=data_t1,
-        data_t3=data_t3,
-        B_ref=B_ref,
-        rho_ref=rho_est[np.random.choice(rho_est.shape[0], size=n_samples * B_ref.shape[0]), :],
-        n_samples=n_samples,
-        n_iterations=num_iter,
-        lr=0.05,
-        blur=blur,
-        verbose=verbose,
-        mode=mode,
-        constrain=True,
-        n_jobs=-1  # Parallélisations si mode == 'per_gene'
-    )
+    alpha_opt_per_gene, beta_opt_per_gene = .5 * np.ones(n_genes), .5 * np.ones(n_genes)
+    if num_iter >= 1:
+        alpha_opt_per_gene, beta_opt_per_gene = optimize_alpha_beta_complete(
+            data_t1=data_t1,
+            data_t3=data_t3,
+            B_ref=B_ref,
+            rho_ref=rho_est[np.random.choice(rho_est.shape[0], size=n_samples * B_ref.shape[0]), :],
+            n_samples=n_samples,
+            n_iterations=num_iter,
+            lr=0.05,
+            blur=blur,
+            verbose=verbose,
+            mode=mode,
+            constrain=True,
+            n_jobs=-1  # Parallélisations si mode == 'per_gene'
+        )
     
     # Interpolation Bursty
     rho_bursty = mccann_interpolation(

@@ -171,7 +171,7 @@ def process_single_cell(i, mu_n_i, data_bool_i, n_simu, model, t1, t2, t3, nu_n)
     if B_row.sum() > 0:
         B_row = B_row / B_row.sum()
     
-    return i, B_row, rho_
+    return i, B_row, rho_[:100, :]
 
     
 def PDMP_ref_interpolation_parallel(mu_n, nu_n, data_bool_mu, n_simu, model, t1, t2, t3, n_jobs=-1):
